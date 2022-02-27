@@ -52,11 +52,22 @@ Model(inputs = input_data, outputs = dense).summary()
 network = CTCModel([input_data], [y_pred])
 network.compile(Adam(lr=0.0001))
 
+base_path = "Data"
+sentences_list = []
 
+words = open(f"{base_path}/sentences.txt", "r").readlines()
+for line in words:
+    if line[0] == "#":
+        continue
+    if line.split(" ")[2] != "err":  # We don't need to deal with errored entries.
+        sentences_list.append(line)
+path,label=get_image_paths_and_labels(sentences_list)
+label=get_labels(label)
+max_width = find_max_width(path)
 #%%    
-x_train, y_train, x_train_len, y_train_len = prepareData("Data/list.csv")
+x_train, y_train, x_train_len, y_train_len = prepareData(path,label)
 
-x_test_pad, y_test_pad, x_test_len, y_test_len = prepareData("Data/list.csv")
+x_test_pad, y_test_pad, x_test_len, y_test_len = prepareData(path,label)
 
 nb_labels = 90# number of labels (10, this is digits)
 batch_size = 5 # size of the batch that are considered

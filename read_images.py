@@ -29,15 +29,54 @@ def returnClasses(string):
     classes = np.asarray(classes)
     return classes
     
-infile = pd.read_csv("Data/list.csv")
+
 #%%
-def find_max_width(path):
-    infile = pd.read_csv(path)
+base_image_path = os.path.join(base_path, "sentences")
+def get_image_paths_and_labels(samples):
+    paths = []
+    corrected_samples = []
+    for (i, file_line) in enumerate(samples):
+        line_split = file_line.strip()
+        line_split = line_split.split(" ")
+
+        # Each line split will have this format for the corresponding image:
+        # part1/part1-part2/part1-part2-part3.png
+        image_name = line_split[0]
+        partI = image_name.split("-")[0]
+        partII = image_name.split("-")[1]
+        img_path = os.path.join(
+            base_image_path, partI, partI + "-" + partII, image_name + ".png"
+        )
+        if os.path.getsize(img_path):
+            paths.append(img_path)
+            corrected_samples.append(file_line.split("\n")[0])
+
+    return paths, corrected_samples
+
+
+
+def get_labels(train_labels):
+    train_labels_cleaned = []
+    characters = set()
+    max_len = 0
+    for label in train_labels:
+        label = label.split(" ")[-1].strip()
+        label=label.split("|")
+        label=" ".join(label)
+    
+    for char in label:
+        characters.add(char)
+
+    max_len = max(max_len, len(label))
+    train_labels_cleaned.append(label)
+
+    return train_labels_cleaned
+
+def find_max_width(paths):
     max_width = 0
-    for record in range(0, len(infile)):
-        path = infile["Path"][record]
+    for record in range(0, len(paths)):
         
-        image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(record, cv2.IMREAD_GRAYSCALE)
         
         h, w = np.shape(image)
         
@@ -56,9 +95,9 @@ def find_max_width(path):
     return(max_width)
         
 #%%
-max_width = find_max_width("Data/list.csv")
+# 
 
-def split_frames(path):
+def split_frames(path,max_width):
     image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     
     h, w = np.shape(image)
@@ -84,19 +123,18 @@ def split_frames(path):
     return frames
 
 #%%
-def prepareData(path):
-    infile = pd.read_csv(path)
+def prepareData(path,label,max_width):
 
     x_train = np.zeros((len(infile), max_width // window_width, window_height, window_width, 1))    
     y_train = []
     im_train = []
     
-    for record in range(0, len(infile)):
+    for record in range(0, path):
         print("Reading file: " + str (record))
-        path = infile["Path"][record]
-        annotation = infile["Annotation"][record]
+        path = path[record]
+        annotation = label[record]
         
-        image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(record, cv2.IMREAD_GRAYSCALE)
         
         h, w = np.shape(image)
         
@@ -113,7 +151,7 @@ def prepareData(path):
         x_train_len = (x_train_len/18).astype(int)
         y_train_len = np.asarray([len(y_train[i]) for i in range(len(y_train))])
         
-        x_train[record] = split_frames(path)
+        x_train[record] = split_frames(path,max_width)
         
         y_train_pad = sequence.pad_sequences(y_train, value=float(nb_labels), dtype='float32', padding="post")
 
