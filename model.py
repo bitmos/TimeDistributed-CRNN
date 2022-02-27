@@ -6,15 +6,15 @@ Created on Mon Apr  1 13:00:37 2019
 """
 from keras.layers import TimeDistributed, Activation, Dense, Input, Bidirectional, LSTM, Masking, GaussianNoise
 from keras.layers import Conv2D, MaxPooling2D, Reshape, Flatten, Dense
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
-from keras.models import Model
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.models import Model
 from CTCModel import CTCModel
 import pickle
 from keras.preprocessing import sequence
 import numpy as np
 
-from read_images import prepareData
+from read_images import *
 
 #%%
 input_data = Input(shape= (82, 64, 32, 1))  #frame, height, width, channels
@@ -55,7 +55,7 @@ network.compile(Adam(lr=0.0001))
 base_path = "Data"
 sentences_list = []
 
-words = open(f"{base_path}/sentences.txt", "r").readlines()
+words = open("/content/TimeDistributed-CRNN/Data/sentences.txt", "r").readlines()
 for line in words:
     if line[0] == "#":
         continue
@@ -65,7 +65,7 @@ path,label=get_image_paths_and_labels(sentences_list)
 label=get_labels(label)
 max_width = find_max_width(path)
 #%%    
-x_train, y_train, x_train_len, y_train_len = prepareData(path,label)
+x_train, y_train, x_train_len, y_train_len = prepareData(path,label,max_width)
 
 x_test_pad, y_test_pad, x_test_len, y_test_len = prepareData(path,label)
 

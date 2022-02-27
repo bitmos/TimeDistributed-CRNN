@@ -6,13 +6,13 @@ import os
 
 #import warpctc_tensorflow
 from keras import Input
-from keras.engine import Model
+from tensorflow.keras import Model
 from keras.layers import Lambda
 from keras.models import model_from_json, Sequential
 import pickle
 from tensorflow.python.ops import ctc_ops as ctc
 
-from keras.utils import Sequence, GeneratorEnqueuer, OrderedEnqueuer
+from tensorflow.keras.utils import Sequence, GeneratorEnqueuer, OrderedEnqueuer
 import warnings
 from keras.utils.generic_utils import Progbar
 from keras.layers import TimeDistributed, Activation, Dense
@@ -884,8 +884,8 @@ class CTCModel:
 
         assert (K.backend() == 'tensorflow')
 
-        batch = tf.log(tf.transpose(y_pred, perm=[1, 0, 2]) + 1e-8)
-        input_length = tf.to_int32(tf.squeeze(input_length))
+        batch = tf.math.log(tf.transpose(y_pred, perm=[1, 0, 2]) + 1e-8)
+        input_length = tf.cast(tf.squeeze(input_length),tf.int32)
 
         greedy = my_params['greedy']
         beam_width = my_params['beam_width']

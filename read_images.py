@@ -4,7 +4,7 @@ Created on Mon Mar 11 22:44:41 2019
 
 @author: Gireesh Sundaram
 """
-
+import os
 import cv2
 import numpy as np
 import pandas as pd
@@ -18,7 +18,7 @@ from keras.preprocessing import sequence
 #%%
 #reading the class files
 data = {}
-with codecs.open("Data/class.txt", 'r', encoding='utf-8') as cF:
+with codecs.open("/content/TimeDistributed-CRNN/Data/class.txt", 'r', encoding='utf-8') as cF:
     data = cF.read().split('\n')
     
 #%%
@@ -31,7 +31,7 @@ def returnClasses(string):
     
 
 #%%
-base_image_path = os.path.join(base_path, "sentences")
+base_image_path = os.path.join('/content/TimeDistributed-CRNN/Data', "sentences")
 def get_image_paths_and_labels(samples):
     paths = []
     corrected_samples = []
@@ -75,20 +75,21 @@ def get_labels(train_labels):
 def find_max_width(paths):
     max_width = 0
     for record in range(0, len(paths)):
-        
-        image = cv2.imread(record, cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(paths[record], cv2.IMREAD_GRAYSCALE)
         
         h, w = np.shape(image)
-        
         if (h > window_height): factor = window_height/h
         else: factor = 1
+        if h<64:
+          factor=window_height/h
+          image = cv2.resize(image, None, fx=factor, fy=factor, interpolation = cv2.INTER_CUBIC)
+        else:
+          image = cv2.resize(image, None, fx=factor, fy=factor, interpolation = cv2.INTER_CUBIC)
         
-        image = cv2.resize(image, None, fx=factor, fy=factor, interpolation = cv2.INTER_CUBIC)
         h, w = np.shape(image)
-        
         if w / window_width < math.ceil(w / window_width):
             padding = np.full((window_height, math.ceil(w / window_width) * 64 - w), 255)
-            image = np.append(image, padding, axis = 1)
+            image = np.append(image+8, padding, axis = 1)
         
         h, w = np.shape(image)
         if w > max_width: max_width = w
@@ -125,7 +126,7 @@ def split_frames(path,max_width):
 #%%
 def prepareData(path,label,max_width):
 
-    x_train = np.zeros((len(infile), max_width // window_width, window_height, window_width, 1))    
+    x_train = np.zeros((len(path), max_width // window_width, window_height, window_width, 1))    
     y_train = []
     im_train = []
     
